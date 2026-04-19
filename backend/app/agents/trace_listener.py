@@ -1,0 +1,163 @@
+import time
+from datetime import datetime, timezone
+from typing import List, Dict, Any
+from crewai.events import (
+    CrewKickoffStartedEvent,
+    CrewKickoffCompletedEvent,
+    AgentExecutionStartedEvent,
+    AgentExecutionCompletedEvent,
+    TaskStartedEvent,
+    TaskCompletedEvent,
+    ToolUsageStartedEvent,
+    ToolUsageFinishedEvent,
+    BaseEventListener,
+)
+
+
+class JessicaTraceListener(BaseEventListener):
+    """Captures CrewAI execution events for observability and storage in Supabase."""
+
+    def __init__(self):
+        super().__init__()
+        self.events: List[Dict[str, Any]] = []
+        self._start_time: float = 0
+
+    def _serialize_event(
+        self, event_type: str, event: Any, extra: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """Serialize a CrewAI event into a storable dict."""
+        entry = {
+            "event_type": event_type,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "elapsed_ms": int((time.time() - self._start_time) * 1000)
+            if self._start_time
+            else 0,
+        }
+        if extra:
+            entry.update(extra)
+        return entry
+
+    def setup_listeners(self, crewai_event_bus):
+        @crewai_event_bus.on(CrewKickoffStartedEvent)
+        def on_crew_started(source, event):
+            self._start_time = time.time()
+            self.events.append(
+                self._serialize_event(
+                    "crew_kickoff_started",
+                    event,
+                    {"crew_name": getattr(event, "crew_name", "unknown")},
+                )
+            )
+
+        @crewai_event_bus.on(CrewKickoffCompletedEvent)
+        def on_crew_completed(source, event):
+            self.events.append(
+                self._serialize_event(
+                    "crew_kickoff_completed",
+                    event,
+                    {
+                        "crew_name": getattr(event, "crew_name", "unknown"),
+                        "output_preview": str(getattr(event, "output", ""))[:500],
+                    },
+                )
+            )
+
+        @crewai_event_bus.on(AgentExecutionStartedEvent)
+        def on_agent_started(source, event):
+            agent_role = getattr(event, "agent_role", None) or "unknown"
+            self.events.append(
+                self._serialize_event(
+                    "agent_execution_started",
+                    event,
+                    {"agent_role": agent_role},
+                )
+            )
+
+        @crewai_event_bus.on(AgentExecutionCompletedEvent)
+        def on_agent_completed(source, event):
+            agent_role = getattr(event, "agent_role", None) or "unknown"
+            self.events.append(
+                self._serialize_event(
+                    "agent_execution_completed",
+                    event,
+                    {
+                        "agent_role": agent_role,
+                        "output_preview": str(getattr(event, "output", ""))[:500],
+                    },
+                )
+            )
+
+        @crewai_event_bus.on(TaskStartedEvent)
+        def on_task_started(source, event):
+            task = getattr(event, "task", None)
+            self.events.append(
+                self._serialize_event(
+                    "task_started",
+                    event,
+                    {
+                        "task_description": str(getattr(task, "description", ""))[:200]
+                        if task
+                        else "unknown"
+                    },
+                )
+            )
+
+        @crewai_event_bus.on(TaskCompletedEvent)
+        def on_task_completed(source, event):
+            task = getattr(event, "task", None)
+            self.events.append(
+                self._serialize_event(
+                    "task_completed",
+                    event,
+                    {
+                        "task_description": str(getattr(task, "description", ""))[:200]
+                        if task
+                        else "unknown",
+                        "output_preview": str(getattr(event, "output", ""))[:500],
+                    },
+                )
+            )
+
+        @crewai_event_bus.on(ToolUsageStartedEvent)
+        def on_tool_started(source, event):
+            # agent_role is a direct field on ToolUsageStartedEvent
+            agent_role = getattr(event, "agent_role", None) or "unknown"
+            self.events.append(
+                self._serialize_event(
+                    "tool_usage_started",
+                    event,
+                    {
+                        "tool_name": getattr(event, "tool_name", "unknown"),
+                        "agent_role": agent_role,
+                    },
+                )
+            )
+
+        @crewai_event_bus.on(ToolUsageFinishedEvent)
+        def on_tool_finished(source, event):
+            # agent_role is a direct field on ToolUsageFinishedEvent
+            agent_role = getattr(event, "agent_role", None) or "unknown"
+            self.events.append(
+                self._serialize_event(
+                    "tool_usage_finished",
+                    event,
+                    {
+                        "tool_name": getattr(event, "tool_name", "unknown"),
+                        "agent_role": agent_role,
+                        "output_preview": str(getattr(event, "output", ""))[:300],
+                    },
+                )
+            )
+
+    def get_trace(self) -> List[Dict[str, Any]]:
+        """Return all captured events as a list of dicts (ready for JSON serialization)."""
+        return self.events
+
+    def reset(self):
+        """Clear all captured events."""
+        self.events = []
+        self._start_time = 0
+
+
+# Global singleton — instantiate once, CrewAI auto-registers it
+trace_listener = JessicaTraceListener()
