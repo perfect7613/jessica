@@ -121,30 +121,51 @@ class JessicaTraceListener(BaseEventListener):
 
         @crewai_event_bus.on(TaskStartedEvent)
         def on_task_started(source, event):
-            task = getattr(event, "task", None)
+            task_name = getattr(event, "task_name", None) or ""
+            # Infer agent domain from task description
+            agent_role = self._extract_agent_role(event)
+            if agent_role == "unknown" and task_name:
+                lower = task_name.lower()
+                if "corporate" in lower:
+                    agent_role = "Corporate Law Specialist"
+                elif "intellectual property" in lower or "confidentiality" in lower:
+                    agent_role = "Intellectual Property Specialist"
+                elif "compliance" in lower or "jurisdiction" in lower or "regulatory" in lower:
+                    agent_role = "Regulatory Compliance Specialist"
+                elif "synthesize" in lower or "synthesis" in lower:
+                    agent_role = "Senior General Counsel"
             self.events.append(
                 self._serialize_event(
                     "task_started",
                     event,
                     {
-                        "task_description": str(getattr(task, "description", ""))[:200]
-                        if task
-                        else "unknown"
+                        "task_description": task_name[:200] if task_name else "unknown",
+                        "agent_role": agent_role,
                     },
                 )
             )
 
         @crewai_event_bus.on(TaskCompletedEvent)
         def on_task_completed(source, event):
-            task = getattr(event, "task", None)
+            task_name = getattr(event, "task_name", None) or ""
+            agent_role = self._extract_agent_role(event)
+            if agent_role == "unknown" and task_name:
+                lower = task_name.lower()
+                if "corporate" in lower:
+                    agent_role = "Corporate Law Specialist"
+                elif "intellectual property" in lower or "confidentiality" in lower:
+                    agent_role = "Intellectual Property Specialist"
+                elif "compliance" in lower or "jurisdiction" in lower or "regulatory" in lower:
+                    agent_role = "Regulatory Compliance Specialist"
+                elif "synthesize" in lower or "synthesis" in lower:
+                    agent_role = "Senior General Counsel"
             self.events.append(
                 self._serialize_event(
                     "task_completed",
                     event,
                     {
-                        "task_description": str(getattr(task, "description", ""))[:200]
-                        if task
-                        else "unknown",
+                        "task_description": task_name[:200] if task_name else "unknown",
+                        "agent_role": agent_role,
                         "output_preview": str(getattr(event, "output", ""))[:500],
                     },
                 )
