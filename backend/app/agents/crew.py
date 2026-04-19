@@ -104,6 +104,7 @@ def analyze_nda_multi_agent(nda_text: str) -> tuple["NDAAnalysisOutput", list]:
         tasks=[corporate_task, ip_task, compliance_task, synthesis_task],
         process=Process.hierarchical,
         manager_llm="openai/gpt-5.4-mini",
+        memory=True,
         verbose=True,
     )
 

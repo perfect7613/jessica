@@ -297,6 +297,7 @@ def create_corporate_specialist() -> Agent:
         backstory=CORPORATE_SPECIALIST_BACKSTORY,
         llm="openai/gpt-5.4-mini",
         tools=[FirecrawlSearchTool(), FirecrawlScrapeTool()],
+        memory=True,
         verbose=True,
         allow_delegation=False,
     )
@@ -315,6 +316,7 @@ def create_ip_specialist() -> Agent:
         backstory=IP_SPECIALIST_BACKSTORY,
         llm="openai/gpt-5.4-mini",
         tools=[FirecrawlSearchTool(), FirecrawlScrapeTool()],
+        memory=True,
         verbose=True,
         allow_delegation=False,
     )
@@ -333,6 +335,7 @@ def create_compliance_specialist() -> Agent:
         backstory=COMPLIANCE_SPECIALIST_BACKSTORY,
         llm="openai/gpt-5.4-mini",
         tools=[FirecrawlSearchTool(), FirecrawlScrapeTool()],
+        memory=True,
         verbose=True,
         allow_delegation=False,
     )

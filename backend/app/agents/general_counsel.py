@@ -92,6 +92,7 @@ def create_general_counsel_agent():
         backstory=GENERAL_COUNSEL_BACKSTORY,
         llm="openai/gpt-5.4-mini",
         tools=[FirecrawlSearchTool(), FirecrawlScrapeTool()],
+        memory=True,
         verbose=True,
         allow_delegation=False,
     )
@@ -139,6 +140,7 @@ def analyze_nda_single_agent(nda_text: str) -> tuple[NDAAnalysisOutput, list]:
     crew = Crew(
         agents=[agent],
         tasks=[task],
+        memory=True,
         verbose=True,
     )
 
