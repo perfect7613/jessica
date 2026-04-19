@@ -6,7 +6,151 @@ Built for the OpenCode Buildathon (MaaS track).
 
 ---
 
-## Architecture
+## Architecture (Mermaid)
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (Next.js + Tailwind + shadcn)"]
+        Upload["Upload Page<br/>drag & drop .md/.pdf"]
+        Analysis["Analysis Page<br/>color-coded NDA + summary<br/>+ trace viewer + annotation"]
+        History["Run History<br/>clickable cards"]
+        Compare["Compare Page<br/>side-by-side runs"]
+        PDF["Redlined PDF<br/>Download (jsPDF)"]
+    end
+
+    Upload -->|POST /api/analyze| API
+    Analysis -->|GET /api/runs/id| API
+    Analysis -->|GET /api/runs/id/trace| API
+    Analysis -->|POST /api/runs/id/annotate| API
+    History -->|GET /api/runs| API
+    Compare -->|GET /api/runs/id| API
+    Analysis --> PDF
+
+    subgraph Backend["Backend (FastAPI + Python 3.12)"]
+        API["FastAPI Router<br/>/analyze /runs /stats /trace /annotate"]
+        Docling["Docling<br/>PDF → Markdown"]
+        API --> Docling
+        Docling --> Crew
+
+        subgraph Crew["CrewAI Crew (Process.hierarchical)"]
+            GC["General Counsel<br/>(Manager + Synthesizer)<br/>Indian Contract Act<br/>Cross-domain risk"]
+
+            GC -->|delegates| Corp["Corporate Specialist<br/>Companies Act 2013<br/>LLP Act 2008<br/>SEBI Takeover Regs"]
+            GC -->|delegates| IP["IP Specialist<br/>Copyright Act 1957<br/>Patents Act 1970<br/>Trade Secrets"]
+            GC -->|delegates| Comp["Compliance Specialist<br/>IT Act 2000 / DPDP Act<br/>FEMA 1999<br/>Jurisdiction"]
+
+            Corp -->|parallel analysis| GC
+            IP -->|parallel analysis| GC
+            Comp -->|parallel analysis| GC
+        end
+
+        GC -->|"NDAAnalysisOutput<br/>(Pydantic JSON)"| API
+
+        subgraph Tools["Agent Tools"]
+            FC_Search["FirecrawlSearchTool<br/>web search for citations"]
+            FC_Scrape["FirecrawlScrapeTool<br/>scrape legal pages"]
+        end
+
+        Corp -.-> FC_Search
+        IP -.-> FC_Search
+        Comp -.-> FC_Search
+        GC -.-> FC_Search
+        Corp -.-> FC_Scrape
+        IP -.-> FC_Scrape
+
+        Trace["JessicaTraceListener<br/>(BaseEventListener)<br/>captures all CrewAI events"]
+        Crew -.->|events| Trace
+    end
+
+    subgraph DB["Supabase (PostgreSQL)"]
+        Runs[("runs<br/>id, input_text, red/yellow/green_flags<br/>summary, full_output (JSONB)<br/>crewai_trace (JSONB)")]
+        Annotations[("annotations<br/>id, run_id (FK), rating 1-5, note")]
+    end
+
+    API -->|store run + trace| Runs
+    API -->|store feedback| Annotations
+    Trace -->|serialize JSON| Runs
+
+    subgraph Knowledge["Agent Knowledge Base"]
+        IIMA["IIMA Working Paper 2025-12-01<br/>M P Ram Mohan et al.<br/>NDAs & Confidentiality under Indian Law"]
+    end
+
+    IIMA -.->|embedded in system prompts| GC
+    IIMA -.->|embedded in system prompts| Corp
+    IIMA -.->|embedded in system prompts| IP
+    IIMA -.->|embedded in system prompts| Comp
+
+    style Frontend fill:#1a1a1e,stroke:#d9ac5f,color:#f5f1e8
+    style Backend fill:#16161a,stroke:#d9ac5f,color:#f5f1e8
+    style Crew fill:#1e1e24,stroke:#78b478,color:#f5f1e8
+    style DB fill:#16161a,stroke:#7ca5d9,color:#f5f1e8
+    style Tools fill:#1e1e24,stroke:#dc4646,color:#f5f1e8
+    style Knowledge fill:#1e1e24,stroke:#d9ac5f,color:#f5f1e8
+    style GC fill:#2a2520,stroke:#d9ac5f,color:#f5f1e8
+    style Corp fill:#1e2520,stroke:#78b478,color:#f5f1e8
+    style IP fill:#1e2520,stroke:#78b478,color:#f5f1e8
+    style Comp fill:#1e2520,stroke:#78b478,color:#f5f1e8
+```
+
+```mermaid
+sequenceDiagram
+    participant U as User / Judge
+    participant FE as Frontend (Next.js)
+    participant BE as Backend (FastAPI)
+    participant D as Docling
+    participant GC as General Counsel
+    participant CS as Corporate Specialist
+    participant IPS as IP Specialist
+    participant CMS as Compliance Specialist
+    participant FC as Firecrawl
+    participant SB as Supabase
+
+    U->>FE: Upload NDA (.md / .pdf)
+    FE->>BE: POST /api/analyze (file)
+    
+    alt PDF uploaded
+        BE->>D: Convert PDF → Markdown
+        D-->>BE: Markdown text
+    end
+
+    BE->>GC: Start hierarchical crew
+    
+    par Parallel specialist analysis
+        GC->>CS: Delegate corporate analysis
+        CS->>FC: Search Indian law citations
+        FC-->>CS: Legal references
+        CS-->>GC: Corporate risk flags
+    and
+        GC->>IPS: Delegate IP analysis
+        IPS->>FC: Search case law
+        FC-->>IPS: Case references
+        IPS-->>GC: IP risk flags
+    and
+        GC->>CMS: Delegate compliance analysis
+        CMS-->>GC: Compliance risk flags
+    end
+
+    GC->>GC: Synthesize all findings
+    GC-->>BE: NDAAnalysisOutput (Pydantic JSON)
+    
+    BE->>SB: Store run + trace
+    BE-->>FE: { run_id, analysis, trace }
+    FE-->>U: Color-coded analysis + summary + trace
+
+    opt User provides feedback
+        U->>FE: Rate 1-5 stars + note
+        FE->>BE: POST /api/runs/{id}/annotate
+        BE->>SB: Store annotation
+    end
+
+    opt Download PDF
+        U->>FE: Click "Download Redlined PDF"
+        FE->>FE: Generate PDF (jsPDF)
+        FE-->>U: jessica-nda-redlined-analysis.pdf
+    end
+```
+
+## Architecture (ASCII)
 
 ```
                                  Jessica — System Architecture
