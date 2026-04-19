@@ -15,6 +15,21 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full antialiased">
       <body className="dark min-h-full flex flex-col bg-background text-foreground">
+        {/* Blinking top banner */}
+        <div className="relative z-20 bg-[rgb(217_172_95)] text-[rgb(15_15_18)]">
+          <a
+            href="https://frontend-snowy-nine-98.vercel.app/analysis/9fce4fa3-e0b0-435a-b21f-a0849f6eaf84"
+            className="flex items-center justify-center gap-3 px-4 h-10 text-[11px] uppercase tracking-[0.2em] font-medium hover:bg-[rgb(230_188_115)] transition-colors"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[rgb(15_15_18)] opacity-60" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[rgb(15_15_18)]" />
+            </span>
+            Check X-AI Contract Doc
+            <span className="text-[9px] opacity-60">→</span>
+          </a>
+        </div>
+
         <header className="relative z-10 border-b border-[rgb(40_40_45)]/80 backdrop-blur-sm bg-background/60">
           <div className="max-w-7xl mx-auto flex items-center justify-between px-6 sm:px-10 h-16">
             <Link
