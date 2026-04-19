@@ -348,13 +348,15 @@ function CompareContent() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+        className="grid grid-cols-1 lg:grid-cols-[1fr_1px_1fr] gap-0"
       >
-        <RunColumn run={runA} label="Run A" />
-        <div className="hidden lg:block">
-          <div className="sticky top-0 h-full border-l border-[rgb(40_40_45)]" />
+        <div className="px-4">
+          <RunColumn run={runA} label="Run A" />
         </div>
-        <RunColumn run={runB} label="Run B" />
+        <div className="hidden lg:block bg-[rgb(40_40_45)]" />
+        <div className="px-4">
+          <RunColumn run={runB} label="Run B" />
+        </div>
       </motion.div>
     </>
   );
