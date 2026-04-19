@@ -165,8 +165,8 @@ export function TraceViewer({ events }: TraceViewerProps) {
                               {config.label}
                             </span>
 
-                            {event.agent_role && (
-                              <span className="text-xs text-[rgb(160_160_170)] bg-[rgb(30_30_34)] px-1.5 py-0.5 rounded">
+                            {event.agent_role && event.agent_role !== "unknown" && (
+                              <span className="text-xs text-[rgb(200_200_210)] bg-[rgb(35_35_40)] px-2 py-0.5 rounded border border-[rgb(50_50_55)]">
                                 {event.agent_role}
                               </span>
                             )}

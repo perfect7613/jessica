@@ -519,33 +519,39 @@ export default function AnalysisPage() {
       )}
 
       {/* Annotation Section */}
-      <Card className="border-[rgb(40_40_45)] bg-[rgb(22_22_26)]">
-        <CardHeader>
-          <CardTitle className="text-lg font-serif text-foreground">
-            Feedback
-          </CardTitle>
+      <Card className="border-[rgb(217_172_95)]/30 bg-gradient-to-br from-[rgb(28_26_22)] to-[rgb(22_22_26)]">
+        <CardHeader className="border-b border-[rgb(217_172_95)]/15 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1 bg-[#d9ac5f] rounded-full" />
+            <CardTitle className="text-lg font-serif text-foreground">
+              Rate This Analysis
+            </CardTitle>
+          </div>
+          <p className="text-xs text-[rgb(160_160_170)] mt-1 ml-[1.25rem]">
+            Your feedback helps improve the quality of future reviews
+          </p>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5 pt-5">
           {/* Existing annotations */}
           {annotations.length > 0 && (
             <div className="space-y-3 mb-4">
-              <span className="text-[10px] uppercase tracking-wider text-[rgb(120_120_130)]">
+              <span className="text-[10px] uppercase tracking-[0.24em] text-[rgb(217_172_95)] font-medium">
                 Previous Feedback
               </span>
               {annotations.map((ann, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 rounded-lg bg-[rgb(18_18_22)] px-4 py-3"
+                  className="flex items-start gap-3 rounded-lg bg-[rgb(15_15_18)] border border-[rgb(40_40_45)] px-4 py-3"
                 >
                   <div className="flex items-center gap-0.5 shrink-0">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <svg
                         key={s}
-                        width="14"
-                        height="14"
+                        width="16"
+                        height="16"
                         viewBox="0 0 24 24"
                         fill={s <= ann.rating ? "#d9ac5f" : "none"}
-                        stroke={s <= ann.rating ? "#d9ac5f" : "rgb(120 120 130)"}
+                        stroke={s <= ann.rating ? "#d9ac5f" : "rgb(60 60 68)"}
                         strokeWidth="1.5"
                       >
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -553,13 +559,13 @@ export default function AnalysisPage() {
                     ))}
                   </div>
                   {ann.note && (
-                    <p className="text-xs text-[rgb(160_160_170)] leading-relaxed">
+                    <p className="text-sm text-[rgb(200_200_210)] leading-relaxed">
                       {ann.note}
                     </p>
                   )}
                 </div>
               ))}
-              <Separator className="bg-[rgb(40_40_45)]" />
+              <Separator className="bg-[rgb(50_48_40)]" />
             </div>
           )}
 
@@ -567,36 +573,36 @@ export default function AnalysisPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center gap-2 text-sm text-[#78b478]"
+              className="flex items-center gap-3 rounded-lg bg-[rgba(120,180,120,0.1)] border border-[rgba(120,180,120,0.2)] px-5 py-4"
             >
-              <ShieldCheck className="size-4" />
-              <span>Thank you for your feedback.</span>
+              <ShieldCheck className="size-5 text-[#78b478]" />
+              <span className="text-sm text-[#78b478] font-medium">Feedback recorded. Thank you.</span>
             </motion.div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="text-xs uppercase tracking-wider text-[rgb(160_160_170)] block mb-2">
-                  Rating
+                <label className="text-[10px] uppercase tracking-[0.24em] text-[rgb(200_200_210)] font-medium block mb-3">
+                  How accurate was this analysis?
                 </label>
                 <StarRating value={rating} onChange={setRating} />
               </div>
 
               <div>
-                <label className="text-xs uppercase tracking-wider text-[rgb(160_160_170)] block mb-2">
+                <label className="text-[10px] uppercase tracking-[0.24em] text-[rgb(200_200_210)] font-medium block mb-2">
                   Notes (optional)
                 </label>
                 <Textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Any additional feedback on this analysis..."
-                  className="bg-[rgb(18_18_22)] border-[rgb(40_40_45)] text-sm resize-none min-h-[80px]"
+                  placeholder="What did the agents get right or wrong..."
+                  className="bg-[rgb(15_15_18)] border-[rgb(50_48_40)] text-sm text-[rgb(220_220_225)] placeholder:text-[rgb(80_80_90)] resize-none min-h-[90px] focus:border-[rgb(217_172_95)]/50 focus:ring-[rgb(217_172_95)]/20"
                 />
               </div>
 
               <Button
                 onClick={handleSubmitAnnotation}
                 disabled={rating === 0 || submitting}
-                className="bg-[#d9ac5f] text-[rgb(15_15_18)] hover:bg-[#c49a4f] disabled:opacity-40"
+                className="bg-[#d9ac5f] text-[rgb(15_15_18)] font-medium hover:bg-[#e6bc73] disabled:opacity-30 disabled:bg-[rgb(60_60_68)] disabled:text-[rgb(100_100_110)] transition-all duration-200 px-6 py-2.5 text-[11px] uppercase tracking-[0.2em]"
               >
                 {submitting ? (
                   <>

@@ -22,6 +22,40 @@ class JessicaTraceListener(BaseEventListener):
         self.events: List[Dict[str, Any]] = []
         self._start_time: float = 0
 
+    @staticmethod
+    def _extract_agent_role(event: Any) -> str:
+        """Extract agent role from event using multiple fallback strategies."""
+        # 1. Direct agent_role field (most reliable)
+        role = getattr(event, "agent_role", None)
+        if role and role != "unknown":
+            return role
+
+        # 2. agent_key field (sometimes set when agent_role isn't)
+        key = getattr(event, "agent_key", None)
+        if key and key != "unknown":
+            return key
+
+        # 3. Nested agent object with .role
+        agent = getattr(event, "agent", None)
+        if agent:
+            r = getattr(agent, "role", None)
+            if r:
+                return r
+
+        # 4. from_agent field (used in delegation events)
+        from_agent = getattr(event, "from_agent", None)
+        if from_agent:
+            r = getattr(from_agent, "role", None) if hasattr(from_agent, "role") else str(from_agent)
+            if r:
+                return r
+
+        # 5. source_type as last resort
+        src = getattr(event, "source_type", None)
+        if src:
+            return src
+
+        return "unknown"
+
     def _serialize_event(
         self, event_type: str, event: Any, extra: Dict[str, Any] = None
     ) -> Dict[str, Any]:
@@ -64,24 +98,22 @@ class JessicaTraceListener(BaseEventListener):
 
         @crewai_event_bus.on(AgentExecutionStartedEvent)
         def on_agent_started(source, event):
-            agent_role = getattr(event, "agent_role", None) or "unknown"
             self.events.append(
                 self._serialize_event(
                     "agent_execution_started",
                     event,
-                    {"agent_role": agent_role},
+                    {"agent_role": self._extract_agent_role(event)},
                 )
             )
 
         @crewai_event_bus.on(AgentExecutionCompletedEvent)
         def on_agent_completed(source, event):
-            agent_role = getattr(event, "agent_role", None) or "unknown"
             self.events.append(
                 self._serialize_event(
                     "agent_execution_completed",
                     event,
                     {
-                        "agent_role": agent_role,
+                        "agent_role": self._extract_agent_role(event),
                         "output_preview": str(getattr(event, "output", ""))[:500],
                     },
                 )
@@ -120,30 +152,26 @@ class JessicaTraceListener(BaseEventListener):
 
         @crewai_event_bus.on(ToolUsageStartedEvent)
         def on_tool_started(source, event):
-            # agent_role is a direct field on ToolUsageStartedEvent
-            agent_role = getattr(event, "agent_role", None) or "unknown"
             self.events.append(
                 self._serialize_event(
                     "tool_usage_started",
                     event,
                     {
                         "tool_name": getattr(event, "tool_name", "unknown"),
-                        "agent_role": agent_role,
+                        "agent_role": self._extract_agent_role(event),
                     },
                 )
             )
 
         @crewai_event_bus.on(ToolUsageFinishedEvent)
         def on_tool_finished(source, event):
-            # agent_role is a direct field on ToolUsageFinishedEvent
-            agent_role = getattr(event, "agent_role", None) or "unknown"
             self.events.append(
                 self._serialize_event(
                     "tool_usage_finished",
                     event,
                     {
                         "tool_name": getattr(event, "tool_name", "unknown"),
-                        "agent_role": agent_role,
+                        "agent_role": self._extract_agent_role(event),
                         "output_preview": str(getattr(event, "output", ""))[:300],
                     },
                 )
