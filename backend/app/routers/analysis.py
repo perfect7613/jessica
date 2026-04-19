@@ -61,6 +61,33 @@ async def analyze_nda(file: UploadFile = File(...)):
     }
 
 
+@router.get("/stats")
+async def get_stats():
+    """Get aggregate stats: total runs, total flags, avg rating."""
+    supabase = get_supabase_client()
+    runs = supabase.table("runs").select("red_flags, yellow_flags, green_flags").execute()
+    annotations = supabase.table("annotations").select("rating").execute()
+
+    total_runs = len(runs.data)
+    total_red = sum(r["red_flags"] for r in runs.data)
+    total_yellow = sum(r["yellow_flags"] for r in runs.data)
+    total_green = sum(r["green_flags"] for r in runs.data)
+    total_clauses = total_red + total_yellow + total_green
+
+    ratings = [a["rating"] for a in annotations.data] if annotations.data else []
+    avg_rating = round(sum(ratings) / len(ratings), 1) if ratings else None
+
+    return {
+        "total_runs": total_runs,
+        "total_clauses_reviewed": total_clauses,
+        "total_red": total_red,
+        "total_yellow": total_yellow,
+        "total_green": total_green,
+        "total_annotations": len(ratings),
+        "avg_rating": avg_rating,
+    }
+
+
 @router.get("/runs")
 async def list_runs():
     """List all past analysis runs."""

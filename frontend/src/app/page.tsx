@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { analyzeNDA, listRuns, type Run } from "@/lib/api";
+import { analyzeNDA, listRuns, getStats, type Run, type Stats } from "@/lib/api";
 
 const ACCEPTED = ".md,.markdown,.txt";
 
@@ -53,6 +53,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<Run[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +61,12 @@ export default function Home() {
       .then((runs) => {
         if (!cancelled) setRecent((runs || []).slice(0, 3));
       })
-      .catch(() => {
-        /* silent — backend may be down during dev */
-      });
+      .catch(() => {});
+    getStats()
+      .then((s) => {
+        if (!cancelled) setStats(s);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -140,14 +144,26 @@ export default function Home() {
           brief in minutes.
         </motion.p>
 
-        {/* Meta row */}
+        {/* Meta row — live stats */}
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 16 },
             show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: [0.2, 0.8, 0.2, 1] } },
           }}
-          className="mt-10 grid grid-cols-3 gap-8 max-w-xl text-[10px] uppercase tracking-[0.24em] text-[rgb(160_160_170)]"
+          className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-8 max-w-2xl text-[10px] uppercase tracking-[0.24em] text-[rgb(160_160_170)]"
         >
+          <div>
+            <div className="text-[rgb(217_172_95)] font-serif text-3xl normal-case tracking-normal">
+              {stats ? String(stats.total_runs).padStart(2, "0") : "—"}
+            </div>
+            <div className="mt-2">Contracts Reviewed</div>
+          </div>
+          <div>
+            <div className="text-[rgb(217_172_95)] font-serif text-3xl normal-case tracking-normal">
+              {stats ? stats.total_clauses_reviewed : "—"}
+            </div>
+            <div className="mt-2">Clauses Analyzed</div>
+          </div>
           <div>
             <div className="text-[rgb(217_172_95)] font-serif text-3xl normal-case tracking-normal">
               04
@@ -156,15 +172,9 @@ export default function Home() {
           </div>
           <div>
             <div className="text-[rgb(217_172_95)] font-serif text-3xl normal-case tracking-normal">
-              ~90s
+              {stats?.avg_rating ? `${stats.avg_rating}/5` : "3-Tier"}
             </div>
-            <div className="mt-2">Avg. Analysis</div>
-          </div>
-          <div>
-            <div className="text-[rgb(217_172_95)] font-serif text-3xl normal-case tracking-normal">
-              3-Tier
-            </div>
-            <div className="mt-2">Risk Flagging</div>
+            <div className="mt-2">{stats?.avg_rating ? "Avg. Rating" : "Risk Flagging"}</div>
           </div>
         </motion.div>
       </motion.section>

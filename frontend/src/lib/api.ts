@@ -20,6 +20,22 @@ export type Run = {
   [key: string]: unknown;
 };
 
+export type Stats = {
+  total_runs: number;
+  total_clauses_reviewed: number;
+  total_red: number;
+  total_yellow: number;
+  total_green: number;
+  total_annotations: number;
+  avg_rating: number | null;
+};
+
+export async function getStats(): Promise<Stats> {
+  const res = await fetch(`${API_BASE}/api/stats`);
+  if (!res.ok) throw new Error("Failed to fetch stats");
+  return res.json();
+}
+
 export async function analyzeNDA(file: File) {
   const formData = new FormData();
   formData.append("file", file);
